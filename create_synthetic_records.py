@@ -48,7 +48,7 @@ def main() -> None:
             out.write(line + "\n")
             if done % 5000 == 0 or done == args.count:
                 print(f"{args.split}: {done} of {args.count}", flush=True)
-    partial.rename(target)
+    partial.replace(target)
 
 
 if __name__ == "__main__":

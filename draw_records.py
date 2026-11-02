@@ -66,7 +66,7 @@ def main() -> None:
                 print(f"{args.split}: {done} of {count}", flush=True)
     images.flush()
     # The labels kept beside the images are the drawn ones, so that the two line up.
-    labels.rename(args.dataset_dir / f"{name}_labels.jsonl")
+    labels.replace(args.dataset_dir / f"{name}_labels.jsonl")
     print(f"drew {count} images into {args.dataset_dir / f'{name}_images.npy'}")
 
 
