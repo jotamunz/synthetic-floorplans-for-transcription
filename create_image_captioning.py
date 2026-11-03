@@ -1,4 +1,4 @@
-"""The captioning set of a split, in the conversation format of LLaVA-Pretrain
+"""The image captioning set of a split, in the conversation format of LLaVA-Pretrain
 (https://huggingface.co/datasets/liuhaotian/LLaVA-Pretrain) and stored as a Hugging Face dataset: per
 plan its id, its image (an `Image` feature, the PNG inside the row) and one conversation asking for a
 summary of the image, answered by how many of each class its record holds, in words ('a single', 'a
@@ -10,8 +10,8 @@ the split itself if it is whole) becomes one Parquet shard, `data/{split}-0000k-
 seed order, with the dataset's features in its schema, so that `load_dataset` and the dataset viewer
 read the images as images. A plan's id is its seed, so it can be found in the source split.
 
-    uv run create_captioning.py --dataset-dir ./synthetic --split val --output-dir ./captioning
-    uv run create_captioning.py --dataset-dir ./synthetic --split train --output-dir ./captioning
+    uv run create_image_captioning.py --dataset-dir ./synthetic --split val --output-dir ./image-captioning
+    uv run create_image_captioning.py --dataset-dir ./synthetic --split train --output-dir ./image-captioning
 """
 
 import argparse
@@ -32,13 +32,13 @@ from PIL import Image
 from shapely.geometry import LineString
 
 #: The questions LLaVA-Pretrain opens its conversations with, each phrase with the image before and after it.
-PROMPTS = json.loads((Path(__file__).parent / "prompts" / "captioning.json").read_text(encoding="utf-8"))
+PROMPTS = json.loads((Path(__file__).parent / "captioning_config" / "image_prompts.json").read_text(encoding="utf-8"))
 
 #: The words a caption is made of: what it calls the image (with a place for its orientation), the words
 #: for how the plan lies (a list per orientation, see `orientation`), the verb leading into what the
 #: image holds, the words for how many of a class there are (a list per tier, see `tier`), and each
 #: class's name.
-VOCABULARY = json.loads((Path(__file__).parent / "prompts" / "captioning_vocabulary.json").read_text(encoding="utf-8"))
+VOCABULARY = json.loads((Path(__file__).parent / "captioning_config" / "image_vocabulary.json").read_text(encoding="utf-8"))
 
 #: Per class, the limits between the tiers past one, in rising order: a count up to the first limit is
 #: tier 2, up to the second tier 3, and so on; past the last it is the top tier.
@@ -74,10 +74,10 @@ BLOCK = 4096
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="The LLaVA captioning set of a split.")
+    parser = argparse.ArgumentParser(description="The LLaVA image captioning set of a split.")
     parser.add_argument("--dataset-dir", type=Path, default=Path("synthetic"))
     parser.add_argument("--split", required=True, help="A split, or the name its parts share: train for train-00 ….")
-    parser.add_argument("--output-dir", type=Path, default=Path("captioning"))
+    parser.add_argument("--output-dir", type=Path, default=Path("image-captioning"))
     parser.add_argument("--workers", type=int, default=max(1, multiprocessing.cpu_count() - 1))
     return parser.parse_args()
 

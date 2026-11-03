@@ -3,5 +3,6 @@ __pycache__/
 .DS_Store
 source/
 /synthetic*/
-/captioning*/
+/image-captioning*/
+/entity-captioning*/
 *.log
