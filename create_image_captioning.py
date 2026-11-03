@@ -31,14 +31,14 @@ from datasets import Features, Image as ImageFeature, List, Value
 from PIL import Image
 from shapely.geometry import LineString
 
-#: The questions LLaVA-Pretrain opens its conversations with, each phrase with the image before and after it.
-PROMPTS = json.loads((Path(__file__).parent / "captioning_config" / "image_prompts.json").read_text(encoding="utf-8"))
+#: The questions and the words a caption is made of: what it calls the image (with a place for its
+#: orientation), the words for how the plan lies (a list per orientation, see `orientation`), the verb
+#: leading into what the image holds, the words for how many of a class there are (a list per tier, see
+#: `tier`), and each class's name.
+VOCABULARY = json.loads((Path(__file__).parent / "captioning_config" / "image_config.json").read_text(encoding="utf-8"))
 
-#: The words a caption is made of: what it calls the image (with a place for its orientation), the words
-#: for how the plan lies (a list per orientation, see `orientation`), the verb leading into what the
-#: image holds, the words for how many of a class there are (a list per tier, see `tier`), and each
-#: class's name.
-VOCABULARY = json.loads((Path(__file__).parent / "captioning_config" / "image_vocabulary.json").read_text(encoding="utf-8"))
+#: The questions LLaVA-Pretrain opens its conversations with, each phrase with the image before and after it.
+PROMPTS = VOCABULARY["prompts"]
 
 #: Per class, the limits between the tiers past one, in rising order: a count up to the first limit is
 #: tier 2, up to the second tier 3, and so on; past the last it is the top tier.
