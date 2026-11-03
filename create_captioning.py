@@ -35,7 +35,7 @@ from shapely.geometry import LineString
 #: orientation), the words for how the plan lies (a list per orientation, see `orientation`), the verb
 #: leading into what the image holds, the words for how many of a class there are (a list per tier, see
 #: `tier`), and each class's name.
-VOCABULARY = json.loads((Path(__file__).parent / "captioning_config" / "image_config.json").read_text(encoding="utf-8"))
+VOCABULARY = json.loads((Path(__file__).parent / "captioning_config" / "vocabulary.json").read_text(encoding="utf-8"))
 
 #: The questions LLaVA-Pretrain opens its conversations with, each phrase with the image before and after it.
 PROMPTS = VOCABULARY["prompts"]

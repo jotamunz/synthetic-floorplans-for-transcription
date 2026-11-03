@@ -1,0 +1,10 @@
+{
+  "prompts": [
+    "<record>\nWhat is {label}?",
+    "What is {label}?\n<record>",
+    "<record>\nDescribe {label}.",
+    "Describe {label}.\n<record>",
+    "<record>\nWhat does {label} represent?",
+    "What does {label} represent?\n<record>"
+  ]
+}
