@@ -10,8 +10,8 @@ the split itself if it is whole) becomes one Parquet shard, `data/{split}-0000k-
 seed order, with the dataset's features in its schema, so that `load_dataset` and the dataset viewer
 read the images as images. A plan's id is its seed, so it can be found in the source split.
 
-    uv run create_image_captioning.py --dataset-dir ./synthetic --split val --output-dir ./image-captioning
-    uv run create_image_captioning.py --dataset-dir ./synthetic --split train --output-dir ./image-captioning
+    uv run create_captioning.py --dataset-dir ./synthetic --split val --output-dir ./captioning
+    uv run create_captioning.py --dataset-dir ./synthetic --split train --output-dir ./captioning
 """
 
 import argparse
@@ -77,7 +77,7 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="The LLaVA image captioning set of a split.")
     parser.add_argument("--dataset-dir", type=Path, default=Path("synthetic"))
     parser.add_argument("--split", required=True, help="A split, or the name its parts share: train for train-00 ….")
-    parser.add_argument("--output-dir", type=Path, default=Path("image-captioning"))
+    parser.add_argument("--output-dir", type=Path, default=Path("captioning"))
     parser.add_argument("--workers", type=int, default=max(1, multiprocessing.cpu_count() - 1))
     return parser.parse_args()
 

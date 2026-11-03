@@ -3,7 +3,7 @@
 # Parquet shards in OUT/data.
 set -euo pipefail
 SOURCE="${1:-synthetic}"
-OUT="${2:-image-captioning}"
+OUT="${2:-captioning}"
 for split in train val test; do
-    uv run create_image_captioning.py --dataset-dir "$SOURCE" --split "$split" --output-dir "$OUT"
+    uv run create_captioning.py --dataset-dir "$SOURCE" --split "$split" --output-dir "$OUT"
 done
