@@ -1,0 +1,64 @@
+{
+  "subjects": [
+    "a {orientation} floor plan",
+    "the {orientation} plan of a floor",
+    "a {orientation} floorplan",
+    "a {orientation} layout",
+    "a {orientation} apartment layout",
+    "a {orientation} residential floor plan",
+    "a {orientation} plan drawing",
+    "a line drawing of a {orientation} floor plan",
+    "a {orientation} architectural plan"
+  ],
+  "orientations": [
+    [""],
+    ["roughly square", "square", "nearly square", "squarish"],
+    ["wide", "broad"],
+    ["tall"]
+  ],
+  "verbs": ["containing", "showing", "with", "featuring", "depicting", "displaying", "including", "that has",
+            "comprising"],
+  "quantities": [
+    ["no"],
+    ["a", "a single"],
+    ["a few", "a handful of"],
+    ["several", "multiple", "a number of", "some"],
+    ["many", "a lot of", "numerous", "lots of", "plenty of", "a large number of"]
+  ],
+  "entrance": {
+    "class": "outside door",
+    "articles": ["a", "the"],
+    "prepositions": ["on", "along", "at"],
+    "sides": [
+      ["top"],
+      ["bottom"],
+      ["left"],
+      ["right"]
+    ],
+    "nouns": ["side", "facade", "wall"]
+  },
+  "rooms": {
+    "class": "door",
+    "singular": ["room"],
+    "plural": ["rooms"],
+    "single": "a single room",
+    "single_leaves_out": ["outside wall", "inside wall"]
+  },
+  "placements": {
+    "walls": {"window": "outside wall", "door": "inside wall"},
+    "prepositions": ["in", "on"]
+  },
+  "classes": {
+    "outside wall": {"singular": ["outside wall", "exterior wall", "external wall", "perimeter wall"],
+                     "plural": ["outside walls", "exterior walls", "external walls", "perimeter walls"]},
+    "inside wall": {"singular": ["inside wall", "interior wall", "internal wall", "partition wall", "dividing wall"],
+                    "plural": ["inside walls", "interior walls", "internal walls", "partition walls", "dividing walls"]},
+    "door": {"singular": ["door", "interior door", "internal door", "doorway"],
+             "plural": ["doors", "interior doors", "internal doors", "doorways"]},
+    "outside door": {"singular": ["outside door", "entrance", "entry door", "front door", "main entrance", "main door",
+                                  "entryway"],
+                     "plural": ["outside doors", "entrances", "entry doors", "front doors", "main entrances",
+                                "main doors", "entryways"]},
+    "window": {"singular": ["window", "window opening", "outer window"], "plural": ["windows", "window openings", "outer windows"]}
+  }
+}
