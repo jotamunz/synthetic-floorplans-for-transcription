@@ -6,5 +6,37 @@
     "Describe {label}.\n<record>",
     "<record>\nWhat does {label} represent?",
     "What does {label} represent?\n<record>"
-  ]
+  ],
+  "answer": "a {direction} {kind} at the {position} of the {plan}",
+  "unplaced_answer": "a {direction} {kind} in the {plan}",
+  "relationships": {
+    "joined": [
+      {"templates": ["{a} {verb} {b}", "{b} {verb} {a}"],
+       "verbs": ["is joined to", "is connected to", "is attached to", "is linked to"]},
+      {"templates": ["{a} and {b} {verb}", "{b} and {a} {verb}"],
+       "verbs": ["are joined", "are connected", "are attached", "are linked"]}
+    ],
+    "in": [
+      {"templates": ["{a} {verb} {b}"],
+       "verbs": ["is in", "is placed in", "is located in", "sits in", "stands in"]},
+      {"templates": ["{b} {verb} {a}"],
+       "verbs": ["contains", "holds", "includes"]}
+    ]
+  },
+  "directions": [
+    ["horizontal"],
+    ["vertical"]
+  ],
+  "rows": [
+    [""],
+    ["top"],
+    ["bottom"]
+  ],
+  "columns": [
+    [""],
+    ["left"],
+    ["right"]
+  ],
+  "plans": ["floor plan", "floorplan", "layout", "apartment layout", "residential floor plan", "plan drawing",
+            "architectural plan"]
 }
