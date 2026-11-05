@@ -1,7 +1,7 @@
 """The entity captioning set of a split, in the conversation format of LLaVA and stored as a Hugging Face
-dataset: per plan its id, its image (an `Image` feature, the PNG inside the row), the labels of its
-entities and one conversation of questions about some of them. A node is answered by its class, which
-way it runs and the sides of the plan it is clearly on; a relationship by the two nodes it links.
+dataset: per plan its id, its image (an `Image` feature, the PNG inside the row), its record and one
+conversation of questions about some of its entities. A node is answered by its class, which way it
+runs and the sides of the plan it is clearly on; a relationship by the two nodes it links.
 
 An entity is a node or a relationship of the plan's record: nodes are labelled `E0`, `E1`, … and
 relationships `R0`, `R1`, …, each in the record's order. A conversation asks about `QUESTIONS` of them,
@@ -20,7 +20,7 @@ import random
 import numpy as np
 from datasets import Features, Image as ImageFeature, List, Value
 
-from captioning_utils import config, parse_args, write_split
+from captioning_utils import RECORD_FEATURE, config, parse_args, stored_record, write_split
 
 #: The questions, each with a place for the label it asks about and with the record before or after it,
 #: the templates of a node's answer with and without a position, and its words: a list per direction, row
@@ -41,7 +41,7 @@ RECORD = "<record>"
 #: along it. An entity is on a side only if all of it is past the band, so one crossing the middle is not.
 CLEAR = 0.1
 
-FEATURES = Features({"id": Value("string"), "image": ImageFeature(), "labels": List(Value("string")),
+FEATURES = Features({"id": Value("string"), "image": ImageFeature(), "record": RECORD_FEATURE,
                      "conversations": List({"from": Value("string"), "value": Value("string")})})
 SCHEMA = FEATURES.arrow_schema
 
@@ -120,7 +120,7 @@ def conversation(record: dict) -> list:
 
 def row(record: dict, image: bytes) -> dict:
     name = f"{record['seed']:07d}"
-    return {"id": name, "image": {"bytes": image, "path": f"{name}.png"}, "labels": labels(record),
+    return {"id": name, "image": {"bytes": image, "path": f"{name}.png"}, "record": stored_record(record),
             "conversations": conversation(record)}
 
 

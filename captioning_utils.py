@@ -3,7 +3,7 @@
 The images and records are the ones `draw_records.py` wrote. Each part of the split (`train-00` …, or
 the split itself if it is whole) becomes one Parquet shard, `data/{split}-0000k-of-0000n.parquet`, in
 seed order, with the dataset's features in its schema, so that `load_dataset` and the dataset viewer
-read the images as images. A plan's id is its seed, so it can be found in the source split.
+read the images as images. A row holds its plan's record, and its id is the plan's seed.
 """
 
 import argparse
@@ -16,7 +16,12 @@ from typing import Callable
 import numpy as np
 import pyarrow as pa
 import pyarrow.parquet as pq
+from datasets import List, Value
 from PIL import Image
+
+#: The feature of a row's record: its nodes and relationships as `synthetic.py` writes them.
+RECORD_FEATURE = {"nodes": List({"class": Value("string"), "points": List(List(Value("float64")))}),
+                  "relationships": List({"type": Value("string"), "nodes": List(Value("int64"))})}
 
 #: Rows per row group, as `datasets` writes image datasets.
 ROW_GROUP = 100
@@ -36,6 +41,11 @@ def parse_args(description: str, output_dir: str) -> argparse.Namespace:
     parser.add_argument("--output-dir", type=Path, default=Path(output_dir))
     parser.add_argument("--workers", type=int, default=max(1, multiprocessing.cpu_count() - 1))
     return parser.parse_args()
+
+
+def stored_record(record: dict) -> dict:
+    """A row's record: what the plan holds, its seed being the row's id already."""
+    return {"nodes": record["nodes"], "relationships": record["relationships"]}
 
 
 def png(image: np.ndarray) -> bytes:

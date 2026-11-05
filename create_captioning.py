@@ -20,7 +20,7 @@ import shapely
 from datasets import Features, Image as ImageFeature, List, Value
 from shapely.geometry import LineString
 
-from captioning_utils import config, parse_args, write_split
+from captioning_utils import RECORD_FEATURE, config, parse_args, stored_record, write_split
 
 #: The questions and the words a caption is made of: what it calls the image (with a place for its
 #: orientation), the words for how the plan lies (a list per orientation, see `orientation`), the verb
@@ -54,7 +54,7 @@ for _kind, _limits in LIMITS.items():
 SQUARE = 1.1
 ELONGATED = 1.5
 
-FEATURES = Features({"id": Value("string"), "image": ImageFeature(),
+FEATURES = Features({"id": Value("string"), "image": ImageFeature(), "record": RECORD_FEATURE,
                      "conversations": List({"from": Value("string"), "value": Value("string")})})
 SCHEMA = FEATURES.arrow_schema
 
@@ -198,7 +198,7 @@ def articles(text: str) -> str:
 
 def row(record: dict, image: bytes) -> dict:
     name = f"{record['seed']:07d}"
-    return {"id": name, "image": {"bytes": image, "path": f"{name}.png"},
+    return {"id": name, "image": {"bytes": image, "path": f"{name}.png"}, "record": stored_record(record),
             "conversations": [{"from": "human", "value": prompt(record["seed"])},
                               {"from": "gpt", "value": caption(record)}]}
 

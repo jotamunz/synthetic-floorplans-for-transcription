@@ -6,7 +6,7 @@ This repo generates synthetic floor plans and builds three datasets from them:
 |---|---|---|
 | [Transcription](#transcription) | a drawing and its record | training a model to read a drawing into a record |
 | [Captioning](#captioning) | a drawing and a caption of the whole plan | aligning a vision encoder with a language model |
-| [Entity captioning](#entity-captioning) | a drawing, its entity labels and questions about single entities | aligning a record decoder's embeddings with a language model |
+| [Entity captioning](#entity-captioning) | a drawing and captions of single entities | aligning a record decoder's embeddings with a language model |
 
 Every plan is generated from its seed, so a seed always gives the same plan, record and drawing. A
 record lists the plan's walls, doors and windows, which walls are joined and which wall each opening
@@ -83,9 +83,9 @@ Its questions and words are in `captioning_config/vocabulary.json`.
 
 ### Entity captioning
 
-The same plans, each with a label for every entity of its record (`E0`, `E1`, … for nodes and `R0`,
-`R1`, … for relationships, in the record's order) and a conversation of questions about ten of them,
-picked at random by seed. `<record>` stands in the first question only. See
+The same plans, each with its record and a conversation of questions about ten of its entities, picked
+at random by seed. The record's order names them: `E0`, `E1`, … are its nodes and `R0`, `R1`, … its
+relationships. `<record>` stands in the first question only. See
 [its card](dataset_cards/synthetic-floorplans-entity-captioning.md).
 
 A node is answered by which way it runs, its class and the sides of the plan it is clearly on, a
@@ -109,7 +109,3 @@ uv run create_entity_captioning.py --dataset-dir ./synthetic --split val --outpu
 
 Its questions and words are in `captioning_config/entity_vocabulary.json`, and its class names in
 `captioning_config/vocabulary.json`, shared with image captioning.
-
-Both captioning datasets are written as Parquet shards in `data/`, with their images as a Hugging Face
-`Image` feature. Their builds do not copy a card, so before publishing copy each one into its folder as
-`README.md`; it also tells `load_dataset` which files make up each split.

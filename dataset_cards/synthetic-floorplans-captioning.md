@@ -7,8 +7,6 @@ size_categories:
   - 100K<n<1M
 task_categories:
   - image-to-text
-source_datasets:
-  - benikm91/synthetic-floorplans-for-transcription
 tags:
   - floor-plans
   - architecture
@@ -33,10 +31,10 @@ windows and rooms, which way it is shaped, and where its entrance is. The set is
 vision encoder with a language model, and follows the conversation format of
 [LLaVA-Pretrain](https://huggingface.co/datasets/liuhaotian/LLaVA-Pretrain).
 
-The plans are those of
-[synthetic-floorplans-for-transcription](https://huggingface.co/datasets/benikm91/synthetic-floorplans-for-transcription).
-Every caption is computed from the plan's record, the same record the drawing is rendered from, so
-nothing in a caption is estimated or annotated by hand. Its companion,
+The plans are fresh ones from the generator of
+[synthetic-floorplans-for-transcription](https://huggingface.co/datasets/benikm91/synthetic-floorplans-for-transcription),
+and each row holds its plan's record. Every caption is computed from that record, the same record the
+drawing is rendered from, so nothing in a caption is estimated or annotated by hand. Its companion,
 [synthetic-floorplans-entity-captioning](https://huggingface.co/datasets/jotamunz/synthetic-floorplans-entity-captioning),
 asks about the single nodes and relationships of the same plans.
 
@@ -45,6 +43,7 @@ from datasets import load_dataset
 
 plans = load_dataset("jotamunz/synthetic-floorplans-captioning", split="train")
 plans[3]["image"]          # a PIL image
+plans[3]["record"]         # the nodes and relationships it is drawn from
 plans[3]["conversations"]  # one question and its caption
 ```
 
@@ -53,12 +52,14 @@ plans[3]["conversations"]  # one question and its caption
 | field | type | description |
 |---|---|---|
 | `id` | string | The plan's seed, padded to 7 digits. |
-| `image` | Image | A 512 × 512 grayscale PNG, black on white, with the same pixels as the source dataset. |
+| `image` | Image | A 512 × 512 grayscale PNG, black on white, drawn from the record alone. |
+| `record` | struct | The plan's nodes and relationships, described [below](#the-record). |
 | `conversations` | list of {`from`, `value`} | One human question and one `gpt` answer. |
 
 ```json
 {"id": "0000003",
  "image": "<512 × 512 PNG>",
+ "record": {"nodes": ["…"], "relationships": ["…"]},
  "conversations": [
    {"from": "human", "value": "<image>\nGive a brief description of the image."},
    {"from": "gpt", "value": "a tall layout comprising a few doors, multiple exterior walls, a handful of internal walls, the front door at the right side and some outer windows."}]}
@@ -67,6 +68,25 @@ plans[3]["conversations"]  # one question and its caption
 LLaVA-Pretrain ships its images in a zip and names each in its `image` field. Here the image is in the
 row, so the dataset viewer shows it and nothing needs unpacking. For training code that expects the
 original layout, write each image to `{id}.png` and set `image` to that name.
+
+## The record
+
+Every row holds the record its plan was generated with, and its drawing and answers follow from that
+record alone.
+
+```json
+{"nodes": [{"class": "outside wall", "points": [[124.0, 90.0], [220.0, 90.0]]}, "…"],
+ "relationships": [{"type": "joined", "nodes": [0, 1]}, "…"]}
+```
+
+- A **node** has a class (`outside wall`, `inside wall`, `door`, `outside door` or `window`) and the two
+  ends of its segment, in pixels of the image, x from the left and y from the top.
+- A **relationship** has a type and the two nodes it links, as positions in `nodes`. `joined` links two
+  walls that share an end, and `in` links an opening to the wall it stands in, opening first.
+
+The format is the one of
+[synthetic-floorplans-for-transcription](https://huggingface.co/datasets/benikm91/synthetic-floorplans-for-transcription),
+whose card describes it in full.
 
 ## Questions
 
@@ -118,13 +138,13 @@ and "perimeter wall". An evaluation should map them back to their class.
 
 | split | plans | seeds | files |
 |---|---|---|---|
-| train | 450,000 | 0 – 449,999 | `data/train-0000k-of-00009.parquet`, one per source part |
-| validation | 5,000 | 1,000,000 – 1,004,999 | `data/val-00000-of-00001.parquet` |
-| test | 5,000 | 2,000,000 – 2,004,999 | `data/test-00000-of-00001.parquet` |
+| train | 200,000 | 3,000,000 – 3,199,999 | `data/train-0000k-of-00004.parquet` |
+| validation | 5,000 | 4,000,000 – 4,004,999 | `data/val-00000-of-00001.parquet` |
+| test | 5,000 | 5,000,000 – 5,004,999 | `data/test-00000-of-00001.parquet` |
 
-A plan's `id` is its seed, so its full record can be found in the source dataset, on line
-`seed − first seed` of its part. Shard `k` of the training split holds source part `train-0k`, which
-starts at seed 50,000 k.
+A plan's `id` is its seed. The seeds are apart from those of
+[synthetic-floorplans-for-transcription](https://huggingface.co/datasets/benikm91/synthetic-floorplans-for-transcription),
+so a model trained on that dataset has not seen these plans.
 
 ## Limitations
 
@@ -136,15 +156,23 @@ starts at seed 50,000 k.
 
 ## Regenerating
 
-The set is built from the source dataset with the `instruction-tuning` branch of
-[synthetic-floorplans-for-transcription](https://github.com/jotamunz/synthetic-floorplans-for-transcription/tree/instruction-tuning).
-Questions and words are in `captioning_config/vocabulary.json`.
+The set is built with the `instruction-tuning` branch of
+[synthetic-floorplans-for-transcription](https://github.com/jotamunz/synthetic-floorplans-for-transcription/tree/instruction-tuning):
+the plans from their seeds, then the captions. A seed always gives the same plan. Questions and words
+are in `captioning_config/vocabulary.json`.
 
 ```bash
-./build_synthetic.sh ./synthetic
-./build_captioning.sh ./synthetic ./captioning
+uv run create_synthetic_records.py --output-dir ./plans --split val --first-seed 4000000 --count 5000
+uv run create_synthetic_records.py --output-dir ./plans --split test --first-seed 5000000 --count 5000
+for part in 0 1 2 3; do
+    uv run create_synthetic_records.py --output-dir ./plans --split "train-0$part" --first-seed $((3000000 + part * 50000)) --count 50000
+done
+for split in val test train-00 train-01 train-02 train-03; do
+    uv run draw_records.py --dataset-dir ./plans --split "$split"
+done
+./build_captioning.sh ./plans ./captioning
 ```
 
 ## License
 
-CC BY 4.0, as the source dataset.
+CC BY 4.0, as synthetic-floorplans-for-transcription.

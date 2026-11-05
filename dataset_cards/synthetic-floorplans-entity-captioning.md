@@ -7,8 +7,6 @@ size_categories:
   - 100K<n<1M
 task_categories:
   - image-text-to-text
-source_datasets:
-  - benikm91/synthetic-floorplans-for-transcription
 tags:
   - floor-plans
   - architecture
@@ -33,17 +31,29 @@ labelled wall, door or window is and where it lies, and which two nodes a relati
 is meant for aligning the per-entity embeddings of a record decoder with a language model, and uses
 LLaVA's conversation format with a `<record>` token in place of `<image>`.
 
-The plans are those of
-[synthetic-floorplans-for-transcription](https://huggingface.co/datasets/benikm91/synthetic-floorplans-for-transcription),
-and every answer is computed from the plan's record. Its companion,
+The plans are fresh ones from the generator of
+[synthetic-floorplans-for-transcription](https://huggingface.co/datasets/benikm91/synthetic-floorplans-for-transcription).
+Its companion,
 [synthetic-floorplans-captioning](https://huggingface.co/datasets/jotamunz/synthetic-floorplans-captioning),
 captions the same plans as a whole.
+
+## Intended use
+
+This set is meant to be built from **predicted records**, the output of a model transcribing a drawing,
+and not from the true synthetic records. A decoder writes its entities and their embeddings in the same
+order, so `E0` in a question is the decoder's first node and its first embedding.
+
+The dataset itself does not depend on where a record came from. A row's image, record and conversation
+are all built from one record, so they agree with each other and work the same whether that record is
+predicted or true.
+
+## Usage
 
 ```python
 from datasets import load_dataset
 
 plans = load_dataset("jotamunz/synthetic-floorplans-entity-captioning", split="train")
-plans[3]["labels"]         # ["E0", "E1", …, "R0", "R1", …]
+plans[3]["record"]         # the nodes and relationships the questions name
 plans[3]["conversations"]  # ten questions and their answers
 ```
 
@@ -52,14 +62,14 @@ plans[3]["conversations"]  # ten questions and their answers
 | field | type | description |
 |---|---|---|
 | `id` | string | The plan's seed, padded to 7 digits. |
-| `image` | Image | A 512 × 512 grayscale PNG, black on white, with the same pixels as the source dataset. |
-| `labels` | list of strings | A label for every entity of the record: `E0`, `E1`, … then `R0`, `R1`, … |
+| `image` | Image | A 512 × 512 grayscale PNG, black on white, drawn from the record alone. |
+| `record` | struct | The plan's nodes and relationships, described [below](#the-record). |
 | `conversations` | list of {`from`, `value`} | Ten questions, each followed by its answer. |
 
 ```json
 {"id": "0000003",
  "image": "<512 × 512 PNG>",
- "labels": ["E0", "E1", "…", "E27", "R0", "R1", "…", "R36"],
+ "record": {"nodes": ["…"], "relationships": ["…"]},
  "conversations": [
    {"from": "human", "value": "<record>\nWhat is R2?"},
    {"from": "gpt", "value": "E14 and E0 are connected"},
@@ -69,14 +79,34 @@ plans[3]["conversations"]  # ten questions and their answers
    {"from": "gpt", "value": "a vertical outer window at the bottom left of the architectural plan"}]}
 ```
 
-**The rows do not hold the record or any embeddings.** `<record>` is a placeholder for the training
-code to fill. `E{i}` is node `i` of the plan's record and `R{j}` is relationship `j`, in the record's
-order. The record is found in the source dataset by the plan's seed, which is its `id`.
+`E{i}` is node `i` of the row's `record`, and `R{j}` is relationship `j`. The labels are not stored,
+because the record's order defines them: a decoder that writes entities and their embeddings in that
+order can match `E{i}` directly to its text and its embedding. `<record>` is a placeholder for the
+training code to fill: **the rows hold the record itself but no embeddings**.
+
+## The record
+
+Every row holds the record it was built from, and its drawing and answers follow from that record
+alone.
+
+```json
+{"nodes": [{"class": "outside wall", "points": [[124.0, 90.0], [220.0, 90.0]]}, "…"],
+ "relationships": [{"type": "joined", "nodes": [0, 1]}, "…"]}
+```
+
+- A **node** has a class (`outside wall`, `inside wall`, `door`, `outside door` or `window`) and the two
+  ends of its segment, in pixels of the image, x from the left and y from the top.
+- A **relationship** has a type and the two nodes it links, as positions in `nodes`. `joined` links two
+  walls that share an end, and `in` links an opening to the wall it stands in, opening first.
+
+The format is the one of
+[synthetic-floorplans-for-transcription](https://huggingface.co/datasets/benikm91/synthetic-floorplans-for-transcription),
+whose card describes it in full.
 
 ## Conversations
 
-Each conversation asks about 10 entities, picked at random from all of the plan's labels. A plan has
-about 42 nodes and 60 relationships on average, so about 41% of the questions are about nodes, 45%
+Each conversation asks about 10 entities, picked at random from all of the plan's entities. A true
+record has about 42 nodes and 60 relationships on average, so about 41% of the questions are about nodes, 45%
 about `joined` relationships and 13% about `in` relationships. No entity is asked about twice in a
 conversation. The picks and all word choices come from a random generator seeded by the plan, so a plan
 always gets the same conversation.
@@ -95,7 +125,7 @@ An answer gives which way the node runs, its class, and the sides of the plan it
 
 A side is named only when it is clear. Around the middle of the plan's outline lies a central band,
 reaching 10% of the plan's size to each side, along each axis. A node is on a side only if all of it is
-past the band, so a node crossing the middle has no side on that axis. Across all nodes, 47% name both
+past the band, so a node crossing the middle has no side on that axis. Across true nodes, 47% name both
 axes, 49% name one, and 4% name neither:
 
 | clear sides | example |
@@ -124,36 +154,51 @@ opening.
 
 | split | plans | seeds | files |
 |---|---|---|---|
-| train | 450,000 | 0 – 449,999 | `data/train-0000k-of-00009.parquet`, one per source part |
-| validation | 5,000 | 1,000,000 – 1,004,999 | `data/val-00000-of-00001.parquet` |
-| test | 5,000 | 2,000,000 – 2,004,999 | `data/test-00000-of-00001.parquet` |
+| train | 200,000 | 3,000,000 – 3,199,999 | `data/train-0000k-of-00004.parquet` |
+| validation | 5,000 | 4,000,000 – 4,004,999 | `data/val-00000-of-00001.parquet` |
+| test | 5,000 | 5,000,000 – 5,004,999 | `data/test-00000-of-00001.parquet` |
 
-A plan's record is on line `seed − first seed` of its part in the source dataset. Shard `k` of the
-training split holds source part `train-0k`, which starts at seed 50,000 k.
+A plan's `id` is its seed. The seeds are apart from those of
+[synthetic-floorplans-for-transcription](https://huggingface.co/datasets/benikm91/synthetic-floorplans-for-transcription),
+so a model trained on that dataset has not seen these plans.
 
 ## Limitations
 
-- Answers are computed from ground-truth records. A model reading predicted records will meet missing,
-  extra or shifted entities that this set does not show, and its labels will not match these.
+- Answers say what the record says, not what the original plan holds. In a set built from predictions,
+  an error of the prediction shows in the image and the answers alike, so they stay consistent with
+  each other but can differ from the original plan.
+- The shares quoted on this card were measured on true records. Predicted records can differ.
 - Entities are the record's pieces. A straight wall in the drawing can be several nodes, because the
   record ends a wall wherever another meets it, so two `joined` walls can look like one.
-- Positions are coarse, and exact coordinates are not given.
+- Positions in answers are coarse. Exact coordinates are only in `record`.
 - A relationship's answer names labels only, and does not say what the two nodes are.
 - Every question is about something that exists, so the set has no negative examples.
 - The plans are generated, and all their walls are horizontal or vertical.
 
 ## Regenerating
 
-The set is built from the source dataset with the `instruction-tuning` branch of
-[synthetic-floorplans-for-transcription](https://github.com/jotamunz/synthetic-floorplans-for-transcription/tree/instruction-tuning).
-Questions and words are in `captioning_config/entity_vocabulary.json`, and class names in
+The set is built with the `instruction-tuning` branch of
+[synthetic-floorplans-for-transcription](https://github.com/jotamunz/synthetic-floorplans-for-transcription/tree/instruction-tuning):
+the plans from their seeds, then the conversations. A seed always gives the same plan. Questions and
+words are in `captioning_config/entity_vocabulary.json`, and class names in
 `captioning_config/vocabulary.json`.
 
 ```bash
-./build_synthetic.sh ./synthetic
-./build_entity_captioning.sh ./synthetic ./entity-captioning
+uv run create_synthetic_records.py --output-dir ./plans --split val --first-seed 4000000 --count 5000
+uv run create_synthetic_records.py --output-dir ./plans --split test --first-seed 5000000 --count 5000
+for part in 0 1 2 3; do
+    uv run create_synthetic_records.py --output-dir ./plans --split "train-0$part" --first-seed $((3000000 + part * 50000)) --count 50000
+done
+for split in val test train-00 train-01 train-02 train-03; do
+    uv run draw_records.py --dataset-dir ./plans --split "$split"
+done
+./build_entity_captioning.sh ./plans ./entity-captioning
 ```
+
+To build from predicted records, write them in the same format to `{split}_labels.jsonl`, one plan per
+line with its `seed`, `nodes` and `relationships`, in place of the true ones. Then run the last two
+steps: `draw_records.py` renders the images from them, and the build writes the rows.
 
 ## License
 
-CC BY 4.0, as the source dataset.
+CC BY 4.0, as synthetic-floorplans-for-transcription.
