@@ -6,7 +6,7 @@ This repo generates synthetic floor plans and builds four datasets from them:
 |---|---|---|
 | [Transcription](#transcription) | a drawing and its record | training a model to read a drawing into a record |
 | [Captioning](#captioning) | a drawing and a caption of the whole plan | aligning a vision encoder with a language model |
-| [Node captioning](#node-captioning) | a drawing, its nodes and captions of single nodes | aligning a record decoder's node embeddings with a language model |
+| [Node captioning](#node-captioning) | a drawing, its record and captions of single nodes | aligning a record decoder's node embeddings with a language model |
 | [Relationship captioning](#relationship-captioning) | a drawing, its record and captions of single relationships | aligning a record decoder's relationship embeddings with a language model |
 
 Every plan is generated from its seed, so a seed always gives the same plan, record and drawing. A
@@ -84,7 +84,7 @@ Its questions and words are in `captioning_config/vocabulary.json`.
 
 ### Node captioning
 
-The same plans, each with the nodes of its record and a conversation of questions about ten of them,
+The same plans, each with its whole record and a conversation of questions about ten of its nodes,
 picked at random by seed. The record's order names them `E0`, `E1`, …, and `<record>` stands in the first
 question only. A node is answered by which way it runs, its class and the sides of the plan it is
 clearly on. See [its card](dataset_cards/synthetic-floorplans-node-captioning.md).

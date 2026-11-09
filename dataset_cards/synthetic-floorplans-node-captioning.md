@@ -55,8 +55,8 @@ predicted or true.
 from datasets import load_dataset
 
 plans = load_dataset("jotamunz/synthetic-floorplans-node-captioning", split="train")
-plans[3]["record"]["nodes"]  # the nodes the questions name
-plans[3]["conversations"]    # ten questions and their answers
+plans[3]["record"]         # the nodes the questions name, and their relationships
+plans[3]["conversations"]  # ten questions and their answers
 ```
 
 ## Data format
@@ -65,13 +65,13 @@ plans[3]["conversations"]    # ten questions and their answers
 |---|---|---|
 | `id` | string | The plan's seed, padded to 7 digits. |
 | `image` | Image | A 512 × 512 grayscale PNG, black on white, drawn from the record alone. |
-| `record` | struct | The nodes of the plan's record, described [below](#the-record). |
+| `record` | struct | The plan's whole record, its nodes and relationships, described [below](#the-record). |
 | `conversations` | list of {`from`, `value`} | Ten questions, each followed by its answer. |
 
 ```json
 {"id": "4000000",
  "image": "<512 × 512 PNG>",
- "record": {"nodes": ["…"]},
+ "record": {"nodes": ["…"], "relationships": ["…"]},
  "conversations": [
    {"from": "human", "value": "Describe E16.\n<record>"},
    {"from": "gpt", "value": "a vertical external wall segment at the left of the apartment layout"},
@@ -84,20 +84,25 @@ plans[3]["conversations"]    # ten questions and their answers
 `E{i}` is node `i` of the row's `record`. The labels are not stored, because the record's order defines
 them: a decoder that writes nodes and their embeddings in that order can match `E{i}` directly to its
 text and its embedding. `<record>` is a placeholder for the training code to fill: **the rows hold the
-nodes themselves but no embeddings**.
+record itself but no embeddings**.
 
 ## The record
 
-Every row holds the nodes of the record it was built from, and its drawing and answers follow from them
-alone. The record's relationships are left out, since no question here is about them; the
-relationship captioning set keeps them.
+Every row holds the whole record it was built from, the same as its companions do, and its drawing and
+answers follow from that record alone. The questions here are only about its nodes.
 
 ```json
-{"nodes": [{"class": "outside wall", "points": [[124.0, 90.0], [220.0, 90.0]]}, "…"]}
+{"nodes": [{"class": "outside wall", "points": [[124.0, 90.0], [220.0, 90.0]]}, "…"],
+ "relationships": [{"type": "joined", "nodes": [0, 1]}, "…"]}
 ```
 
-A node has a class (`outside wall`, `inside wall`, `door`, `outside door` or `window`) and the two ends of
-its segment, in pixels of the image, x from the left and y from the top. The format is the one of
+- A **node** has a class (`outside wall`, `inside wall`, `door`, `outside door` or `window`) and the two
+  ends of its segment, in pixels of the image, x from the left and y from the top.
+- A **relationship** has a type and the two nodes it links, as positions in `nodes`. `joined` links two
+  wall segments that share an end, and `in` links an opening to the wall segment it stands in, opening
+  first.
+
+The format is the one of
 [synthetic-floorplans-for-transcription](https://huggingface.co/datasets/benikm91/synthetic-floorplans-for-transcription),
 whose card describes it in full.
 

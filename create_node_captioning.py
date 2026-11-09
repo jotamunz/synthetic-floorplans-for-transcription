@@ -1,7 +1,7 @@
 """The node captioning set of a split, in the conversation format of LLaVA and stored as a Hugging Face
-dataset: per plan its id, its image (an `Image` feature, the PNG inside the row), the nodes of its record
-and one conversation of questions about some of them, each answered by the node's class, which way it
-runs and the sides of the plan it is clearly on.
+dataset: per plan its id, its image (an `Image` feature, the PNG inside the row), its record and one
+conversation of questions about some of its nodes, each answered by the node's class, which way it runs
+and the sides of the plan it is clearly on.
 
 The nodes are labelled `E0`, `E1`, … in the record's order. A conversation asks about `QUESTIONS` of them,
 picked at random from the plan's seed, in the order they are picked; the record is named once, by
@@ -19,7 +19,7 @@ import random
 import numpy as np
 from datasets import Features, Image as ImageFeature, List, Value
 
-from captioning_utils import NODES_FEATURE, config, entity_conversation, parse_args, stored_nodes, write_split
+from captioning_utils import RECORD_FEATURE, config, entity_conversation, parse_args, write_split
 
 #: The questions, each with a place for the label it asks about and with the record before or after it,
 #: the templates of an answer with and without a position, and its words: a list per direction, row and
@@ -38,7 +38,7 @@ QUESTIONS = 10
 #: along it. A node is on a side only if all of it is past the band, so one crossing the middle is not.
 CLEAR = 0.1
 
-FEATURES = Features({"id": Value("string"), "image": ImageFeature(), "record": NODES_FEATURE,
+FEATURES = Features({"id": Value("string"), "image": ImageFeature(), "record": RECORD_FEATURE,
                      "conversations": List({"from": Value("string"), "value": Value("string")})})
 SCHEMA = FEATURES.arrow_schema
 
@@ -95,8 +95,7 @@ def conversation(record: dict) -> list:
 
 
 def main() -> None:
-    write_split(parse_args("The LLaVA node captioning set of a split.", "node-captioning"), SCHEMA, conversation,
-                store=stored_nodes)
+    write_split(parse_args("The LLaVA node captioning set of a split.", "node-captioning"), SCHEMA, conversation)
 
 
 if __name__ == "__main__":
