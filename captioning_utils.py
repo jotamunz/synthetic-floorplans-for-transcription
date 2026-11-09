@@ -10,6 +10,7 @@ import argparse
 import io
 import json
 import multiprocessing
+import random
 from pathlib import Path
 from typing import Callable
 
@@ -22,6 +23,11 @@ from PIL import Image
 #: The feature of a row's record: its nodes and relationships as `synthetic.py` writes them.
 RECORD_FEATURE = {"nodes": List({"class": Value("string"), "points": List(List(Value("float64")))}),
                   "relationships": List({"type": Value("string"), "nodes": List(Value("int64"))})}
+#: The feature of a row's record without its relationships.
+NODES_FEATURE = {"nodes": RECORD_FEATURE["nodes"]}
+
+#: What names the record in a question about one of its entities.
+RECORD_TOKEN = "<record>"
 
 #: Rows per row group, as `datasets` writes image datasets.
 ROW_GROUP = 100
@@ -48,6 +54,25 @@ def stored_record(record: dict) -> dict:
     return {"nodes": record["nodes"], "relationships": record["relationships"]}
 
 
+def stored_nodes(record: dict) -> dict:
+    """A row's record of nodes only."""
+    return {"nodes": record["nodes"]}
+
+
+def entity_conversation(rng: random.Random, prompts: list, labels: list, questions: int,
+                        answer: Callable[[int], str]) -> list:
+    """Questions about `questions` of the `labels`, picked at random in the order they are picked, each
+    answered by `answer` of its position. Only the first question names the record, as LLaVA names its
+    image once."""
+    turns = []
+    for at in rng.sample(range(len(labels)), min(questions, len(labels))):
+        asked = rng.choice(prompts).format(label=labels[at])
+        if turns:
+            asked = asked.replace(RECORD_TOKEN, "").strip()
+        turns += [{"from": "human", "value": asked}, {"from": "gpt", "value": answer(at)}]
+    return turns
+
+
 def png(image: np.ndarray) -> bytes:
     out = io.BytesIO()
     Image.fromarray(image).save(out, format="PNG", optimize=True)
@@ -62,8 +87,18 @@ def parts(dataset_dir: Path, split: str) -> list:
     return [path.name[: -len("_labels.jsonl")] for path in found]
 
 
-def write_split(args: argparse.Namespace, schema: pa.Schema, row: Callable[[dict, bytes], dict]) -> None:
-    """The split's rows, `row` of each record and its image as a PNG, into a shard per part."""
+def row(record: dict, image: bytes, conversation: Callable[[dict], list], store: Callable[[dict], dict]) -> dict:
+    """A plan's row, the same in every captioning set: its id, its image, the part of its record the set
+    keeps, and its conversation."""
+    name = f"{record['seed']:07d}"
+    return {"id": name, "image": {"bytes": image, "path": f"{name}.png"}, "record": store(record),
+            "conversations": conversation(record)}
+
+
+def write_split(args: argparse.Namespace, schema: pa.Schema, conversation: Callable[[dict], list],
+                store: Callable[[dict], dict] = stored_record) -> None:
+    """The split's rows, each a record with its image as a PNG, its conversation and what `store` keeps of
+    its record, into a shard per part."""
     names = parts(args.dataset_dir, args.split)
     data_dir = args.output_dir / "data"
     data_dir.mkdir(parents=True, exist_ok=True)
@@ -85,7 +120,7 @@ def write_split(args: argparse.Namespace, schema: pa.Schema, row: Callable[[dict
                 for start in range(0, len(records), BLOCK):
                     block = records[start:start + BLOCK]
                     encoded = pool.map(png, [np.asarray(images[at]) for at in range(start, start + len(block))], chunksize=32)
-                    rows = [row(record, image) for record, image in zip(block, encoded)]
+                    rows = [row(record, image, conversation, store) for record, image in zip(block, encoded)]
                     writer.write_table(pa.Table.from_pylist(rows, schema=schema), row_group_size=ROW_GROUP)
             partial.replace(shard)
             print(f"{part}: {len(records)} plans into {shard.name}", flush=True)

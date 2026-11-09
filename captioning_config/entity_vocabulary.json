@@ -38,5 +38,15 @@
     ["right"]
   ],
   "plans": ["floor plan", "floorplan", "layout", "apartment layout", "residential floor plan", "plan drawing",
-            "architectural plan"]
+            "architectural plan"],
+  "classes": {
+    "outside wall": {"singular": ["outside wall segment", "exterior wall segment", "external wall segment",
+                                  "perimeter wall segment"],
+                     "plural": ["outside wall segments", "exterior wall segments", "external wall segments",
+                                "perimeter wall segments"]},
+    "inside wall": {"singular": ["inside wall segment", "interior wall segment", "internal wall segment",
+                                 "partition wall segment", "dividing wall segment"],
+                    "plural": ["inside wall segments", "interior wall segments", "internal wall segments",
+                               "partition wall segments", "dividing wall segments"]}
+  }
 }

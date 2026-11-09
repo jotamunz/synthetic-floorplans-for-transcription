@@ -34,9 +34,12 @@ vision encoder with a language model, and follows the conversation format of
 The plans are fresh ones from the generator of
 [synthetic-floorplans-for-transcription](https://huggingface.co/datasets/benikm91/synthetic-floorplans-for-transcription),
 and each row holds its plan's record. Every caption is computed from that record, the same record the
-drawing is rendered from, so nothing in a caption is estimated or annotated by hand. Its companion,
-[synthetic-floorplans-entity-captioning](https://huggingface.co/datasets/jotamunz/synthetic-floorplans-entity-captioning),
-asks about the single nodes and relationships of the same plans.
+drawing is rendered from, so nothing in a caption is estimated or annotated by hand. Two companions
+ask about single entities of the same plans:
+[synthetic-floorplans-node-captioning](https://huggingface.co/datasets/jotamunz/synthetic-floorplans-node-captioning)
+about nodes, and
+[synthetic-floorplans-relationship-captioning](https://huggingface.co/datasets/jotamunz/synthetic-floorplans-relationship-captioning)
+about relationships.
 
 ```python
 from datasets import load_dataset

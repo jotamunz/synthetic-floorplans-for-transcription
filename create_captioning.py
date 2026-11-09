@@ -20,7 +20,7 @@ import shapely
 from datasets import Features, Image as ImageFeature, List, Value
 from shapely.geometry import LineString
 
-from captioning_utils import RECORD_FEATURE, config, parse_args, stored_record, write_split
+from captioning_utils import RECORD_FEATURE, config, parse_args, write_split
 
 #: The questions and the words a caption is made of: what it calls the image (with a place for its
 #: orientation), the words for how the plan lies (a list per orientation, see `orientation`), the verb
@@ -196,15 +196,13 @@ def articles(text: str) -> str:
     return re.sub(r"\ba (?=[aeiou])", "an ", text)
 
 
-def row(record: dict, image: bytes) -> dict:
-    name = f"{record['seed']:07d}"
-    return {"id": name, "image": {"bytes": image, "path": f"{name}.png"}, "record": stored_record(record),
-            "conversations": [{"from": "human", "value": prompt(record["seed"])},
-                              {"from": "gpt", "value": caption(record)}]}
+def conversation(record: dict) -> list:
+    """One question about the plan and its caption."""
+    return [{"from": "human", "value": prompt(record["seed"])}, {"from": "gpt", "value": caption(record)}]
 
 
 def main() -> None:
-    write_split(parse_args("The LLaVA image captioning set of a split.", "captioning"), SCHEMA, row)
+    write_split(parse_args("The LLaVA image captioning set of a split.", "captioning"), SCHEMA, conversation)
 
 
 if __name__ == "__main__":

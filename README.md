@@ -1,12 +1,13 @@
 # synthetic-floorplans-for-transcription
 
-This repo generates synthetic floor plans and builds three datasets from them:
+This repo generates synthetic floor plans and builds four datasets from them:
 
 | dataset | what a row holds | used for |
 |---|---|---|
 | [Transcription](#transcription) | a drawing and its record | training a model to read a drawing into a record |
 | [Captioning](#captioning) | a drawing and a caption of the whole plan | aligning a vision encoder with a language model |
-| [Entity captioning](#entity-captioning) | a drawing and captions of single entities | aligning a record decoder's embeddings with a language model |
+| [Node captioning](#node-captioning) | a drawing, its nodes and captions of single nodes | aligning a record decoder's node embeddings with a language model |
+| [Relationship captioning](#relationship-captioning) | a drawing, its record and captions of single relationships | aligning a record decoder's relationship embeddings with a language model |
 
 Every plan is generated from its seed, so a seed always gives the same plan, record and drawing. A
 record lists the plan's walls, doors and windows, which walls are joined and which wall each opening
@@ -81,31 +82,38 @@ uv run create_captioning.py --dataset-dir ./synthetic --split val --output-dir .
 
 Its questions and words are in `captioning_config/vocabulary.json`.
 
-### Entity captioning
+### Node captioning
 
-The same plans, each with its record and a conversation of questions about ten of its entities, picked
-at random by seed. The record's order names them: `E0`, `E1`, … are its nodes and `R0`, `R1`, … its
-relationships. `<record>` stands in the first question only. See
-[its card](dataset_cards/synthetic-floorplans-entity-captioning.md).
+The same plans, each with the nodes of its record and a conversation of questions about ten of them,
+picked at random by seed. The record's order names them `E0`, `E1`, …, and `<record>` stands in the first
+question only. A node is answered by which way it runs, its class and the sides of the plan it is
+clearly on. See [its card](dataset_cards/synthetic-floorplans-node-captioning.md).
 
-A node is answered by which way it runs, its class and the sides of the plan it is clearly on, a
-relationship by the two nodes it links, in either order:
-
-> What is E16? → a vertical exterior wall at the top right of the floorplan
->
-> What is R2? → E14 and E0 are connected
-
-Built from a built transcription dataset:
+> What is E7? → a horizontal external wall segment at the top right of the apartment layout
 
 ```
-./build_entity_captioning.sh ./synthetic ./entity-captioning
+./build_node_captioning.sh ./synthetic ./node-captioning
 ```
 
-or a split at a time:
+### Relationship captioning
+
+The same plans, each with its whole record and a conversation of questions about ten of its
+relationships, picked at random by seed. The record's order names them `R0`, `R1`, …, and a relationship
+is answered by the two nodes it links, in either order. See
+[its card](dataset_cards/synthetic-floorplans-relationship-captioning.md).
+
+> What is R16? → E5 and E27 are connected
 
 ```
-uv run create_entity_captioning.py --dataset-dir ./synthetic --split val --output-dir ./entity-captioning
+./build_relationship_captioning.sh ./synthetic ./relationship-captioning
 ```
 
-Its questions and words are in `captioning_config/entity_vocabulary.json`, and its class names in
-`captioning_config/vocabulary.json`, shared with image captioning.
+Both are built from a built transcription dataset, or a split at a time:
+
+```
+uv run create_node_captioning.py --dataset-dir ./synthetic --split val --output-dir ./node-captioning
+uv run create_relationship_captioning.py --dataset-dir ./synthetic --split val --output-dir ./relationship-captioning
+```
+
+Their questions and words are in `captioning_config/entity_vocabulary.json`, and the node captioning
+set's class names in `captioning_config/vocabulary.json`, shared with image captioning.

@@ -4,6 +4,7 @@ __pycache__/
 source/
 /synthetic*/
 /captioning*/
-/entity-captioning*/
+/node-captioning*/
+/relationship-captioning*/
 !/captioning_config*/
 *.log

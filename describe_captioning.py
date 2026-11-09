@@ -25,7 +25,7 @@ def describe(shards: list) -> dict:
             for row in batch.to_pylist():
                 seeds.append(int(row["id"]))
                 counts.update(node["class"] for node in row["record"]["nodes"])
-                counts.update(f"relationship: {r['type']}" for r in row["record"]["relationships"])
+                counts.update(f"relationship: {r['type']}" for r in row["record"].get("relationships", []))
                 for turn in row["conversations"]:
                     if turn["from"] == "gpt":
                         answers.add(turn["value"])
