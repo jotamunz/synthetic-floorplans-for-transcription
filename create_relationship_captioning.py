@@ -11,8 +11,8 @@ shares.
 
 The splits are read and written as `captioning_utils.py` does for every captioning set.
 
-    uv run create_relationship_captioning.py --dataset-dir ./synthetic --split val --output-dir ./relationship-captioning
-    uv run create_relationship_captioning.py --dataset-dir ./synthetic --split train --output-dir ./relationship-captioning
+    uv run create_relationship_captioning.py --dataset-dir ./predicted --split val --output-dir ./relationship-captioning
+    uv run create_relationship_captioning.py --dataset-dir ./predicted --split train --output-dir ./relationship-captioning
 """
 
 import random

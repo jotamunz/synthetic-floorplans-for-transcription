@@ -3,6 +3,7 @@ __pycache__/
 .DS_Store
 source/
 /synthetic*/
+/predicted*/
 /captioning*/
 /node-captioning*/
 /relationship-captioning*/

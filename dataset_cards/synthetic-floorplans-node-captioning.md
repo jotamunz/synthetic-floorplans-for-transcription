@@ -46,8 +46,8 @@ and not from the true synthetic records. A decoder writes its nodes and their em
 order, so `E0` in a question is the decoder's first node and its first embedding.
 
 The dataset itself does not depend on where a record came from. A row's image, record and conversation
-are all built from one record, so they agree with each other and work the same whether that record is
-predicted or true.
+are all built from one record, the image drawn from it, so they agree with each other and work the same
+whether that record is predicted or true.
 
 ## Usage
 
@@ -159,7 +159,8 @@ so a model trained on that dataset has not seen these plans.
 
 - Answers say what the record says, not what the original plan holds. In a set built from predictions,
   an error of the prediction shows in the image and the answers alike, so they stay consistent with
-  each other but can differ from the original plan.
+  each other but can differ from the original plan. A tilted segment, which only a prediction holds,
+  is drawn tilted and named by the way it spans further.
 - The shares quoted on this card were measured on true records. Predicted records can differ.
 - A straight wall in the drawing can be several wall segments. In predicted records, where a wall is
   split depends on the prediction.
@@ -171,7 +172,8 @@ so a model trained on that dataset has not seen these plans.
 
 The set is built with the `instruction-tuning` branch of
 [synthetic-floorplans-for-transcription](https://github.com/jotamunz/synthetic-floorplans-for-transcription/tree/instruction-tuning):
-the plans from their seeds, then the conversations. A seed always gives the same plan. Questions and
+the plans from their seeds, a transcribing model's records of them, drawn anew, then the
+conversations. A seed always gives the same plan. Questions and
 words are in `captioning_config/entity_vocabulary.json`, and class names in
 `captioning_config/vocabulary.json`.
 
@@ -184,12 +186,19 @@ done
 for split in val test train-00 train-01 train-02 train-03; do
     uv run draw_records.py --dataset-dir ./plans --split "$split"
 done
-./build_node_captioning.sh ./plans ./node-captioning
 ```
 
-To build from predicted records, write them in the same format to `{split}_labels.jsonl`, one plan per
-line with its `seed`, `nodes` and `relationships`, in place of the true ones. Then run the last two
-steps: `draw_records.py` renders the images from them, and the build writes the rows.
+The model transcribes the drawings and writes its records to a folder per part, `val/`, `train-00/` …,
+each with a `records.jsonl` of one plan per line, its `seed`, `nodes` and `relationships`, in the
+format of the plans' own. `build_predicted.sh` lays them out as the plans are and draws them, and the
+set is built from them:
+
+```bash
+./build_predicted.sh ./predictions ./predicted
+./build_node_captioning.sh ./predicted ./node-captioning
+```
+
+Built from `./plans` instead, the set holds the true records.
 
 ## License
 

@@ -92,7 +92,7 @@ clearly on. See [its card](dataset_cards/synthetic-floorplans-node-captioning.md
 > What is E7? → a horizontal external wall segment at the top right of the apartment layout
 
 ```
-./build_node_captioning.sh ./synthetic ./node-captioning
+./build_node_captioning.sh ./predicted ./node-captioning
 ```
 
 ### Relationship captioning
@@ -105,14 +105,24 @@ is answered by the two nodes it links, in either order. See
 > What is R16? → E5 and E27 are connected
 
 ```
-./build_relationship_captioning.sh ./synthetic ./relationship-captioning
+./build_relationship_captioning.sh ./predicted ./relationship-captioning
 ```
 
-Both are built from a built transcription dataset, or a split at a time:
+Both are built from predicted records: a transcribing model's output, a folder per part (`val/`,
+`train-00/` …) with its `records.jsonl`. `build_predicted.sh` lays them out as a built transcription
+dataset, `{part}_labels.jsonl`, and draws them, `{part}_images.npy`, so that the drawing shows the
+record the rows hold:
 
 ```
-uv run create_node_captioning.py --dataset-dir ./synthetic --split val --output-dir ./node-captioning
-uv run create_relationship_captioning.py --dataset-dir ./synthetic --split val --output-dir ./relationship-captioning
+./build_predicted.sh ../detr-in-dimwit/d2g/out/embeddings ./predicted
+```
+
+Any dataset laid out this way can be the source instead, `./synthetic` for the true records, or a split
+at a time:
+
+```
+uv run create_node_captioning.py --dataset-dir ./predicted --split val --output-dir ./node-captioning
+uv run create_relationship_captioning.py --dataset-dir ./predicted --split val --output-dir ./relationship-captioning
 ```
 
 Their questions and words are in `captioning_config/entity_vocabulary.json`, and the node captioning

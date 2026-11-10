@@ -10,8 +10,8 @@ picked at random from the plan's seed, in the order they are picked; the record 
 
 The splits are read and written as `captioning_utils.py` does for every captioning set.
 
-    uv run create_node_captioning.py --dataset-dir ./synthetic --split val --output-dir ./node-captioning
-    uv run create_node_captioning.py --dataset-dir ./synthetic --split train --output-dir ./node-captioning
+    uv run create_node_captioning.py --dataset-dir ./predicted --split val --output-dir ./node-captioning
+    uv run create_node_captioning.py --dataset-dir ./predicted --split train --output-dir ./node-captioning
 """
 
 import random
@@ -69,9 +69,10 @@ def side(start: float, end: float, low: float, high: float) -> int:
 def place(node: dict, low: np.ndarray, high: np.ndarray) -> tuple:
     """Which way a node runs and where it clearly lies, the indices of their words in the vocabulary:
     direction 0 horizontal, 1 vertical; row 0 not clear, 1 top, 2 bottom; column 0 not clear, 1 left,
-    2 right. The image's y runs downwards, so the top is where y is smaller."""
+    2 right. The image's y runs downwards, so the top is where y is smaller. A node that is tilted, as a
+    predicted one can be, runs the way it spans further."""
     (x0, y0), (x1, y1) = node["points"]
-    return int(y0 != y1), side(y0, y1, low[1], high[1]), side(x0, x1, low[0], high[0])
+    return int(abs(y1 - y0) > abs(x1 - x0)), side(y0, y1, low[1], high[1]), side(x0, x1, low[0], high[0])
 
 
 def answer(rng: random.Random, node: dict, low: np.ndarray, high: np.ndarray) -> str:
