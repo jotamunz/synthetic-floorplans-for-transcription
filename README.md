@@ -109,7 +109,7 @@ is answered by the two nodes it links, in either order. See
 ```
 
 Both are built from predicted records: a transcribing model's output, a folder per part (`val/`,
-`train-00/` …) with its `records.jsonl`. `build_predicted.sh` lays them out as a built transcription
+`train-00/` …) with its `predicted_records.jsonl`. `build_predicted.sh` lays them out as a built transcription
 dataset, `{part}_labels.jsonl`, and draws them, `{part}_images.npy`, so that the drawing shows the
 record the rows hold:
 

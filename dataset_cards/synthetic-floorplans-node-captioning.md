@@ -189,7 +189,7 @@ done
 ```
 
 The model transcribes the drawings and writes its records to a folder per part, `val/`, `train-00/` …,
-each with a `records.jsonl` of one plan per line, its `seed`, `nodes` and `relationships`, in the
+each with a `predicted_records.jsonl` of one plan per line, its `seed`, `nodes` and `relationships`, in the
 format of the plans' own. `build_predicted.sh` lays them out as the plans are and draws them, and the
 set is built from them:
 
